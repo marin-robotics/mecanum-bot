@@ -1,5 +1,4 @@
 #include "main.h"
-#include <cmath>
 
 pros::Controller master(pros::E_CONTROLLER_MASTER);
 pros::Vision vision_sensor(3);
@@ -9,7 +8,7 @@ pros::vision_signature_s_t ring_signature =
 pros::vision_signature_s_t red_mogus_signature =
 	vision_sensor.signature_from_utility(2, 5105, 6761, 5933, 699, 1629, 1164, 3.000, 0);
 pros::vision_signature_s_t blue_mogus_signature =
-	vision_sensor.signature_from_utility(2, -3049, -2407, -2728, 9121, 10519, 9820, 3.000, 0);
+	vision_sensor.signature_from_utility(3, -3049, -2407, -2728, 9121, 10519, 9820, 3.000, 0);
 
 pros::Motor front_left (11, MOTOR_GEARSET_18);
 pros::Motor front_right (1, MOTOR_GEARSET_18, true);
@@ -91,27 +90,32 @@ void autonomous() {
 
 	while (true) {
 		pros::vision_object_s_t red_mobile_goals[2];
-		vision_sensor.read_by_sig(0, blue_mogus_signature.id, 2, red_mobile_goals);
+		vision_sensor.read_by_sig(0, red_mogus_signature.id, 2, red_mobile_goals);
 
 		pros::lcd::print(0, "object count: %d", vision_sensor.get_object_count());
 		pros::lcd::print(1, "red object 0: (%u, %u)", red_mobile_goals[0].x_middle_coord, red_mobile_goals[0].y_middle_coord);
 		pros::lcd::print(2, "red object 1: (%u, %u)", red_mobile_goals[1].x_middle_coord, red_mobile_goals[1].y_middle_coord);
 
+		uint16_t area = red_mobile_goals[0].width * red_mobile_goals[0].height;
 
-		if (185 < red_mobile_goals[0].x_middle_coord && red_mobile_goals[0].x_middle_coord < 215) {
-			move_left(50);
-			move_right(50);
-		}
-		else{
-			if (red_mobile_goals[0].x_middle_coord > 200) {
+		pros::lcd::print(3, "red object area: %u", area);
+
+		if (area < 1000) {
+			if (190 < red_mobile_goals[0].x_middle_coord && red_mobile_goals[0].x_middle_coord < 210) {
 				move_left(50);
-				move_right(0);
-			}
-			else{
 				move_right(50);
-				move_left(0);
+			} else {
+				if (red_mobile_goals[0].x_middle_coord > 200) {
+					move_left(50);
+					move_right(0);
+				} else {
+					move_right(50);
+					move_left(0);
+				}
 			}
-
+		} else {
+			move_left(0);
+			move_right(0);
 		}
 
 		pros::delay(20);
